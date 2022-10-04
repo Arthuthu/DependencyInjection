@@ -16,7 +16,7 @@ namespace ConsoleUI
             var builder = new ContainerBuilder();
 
             builder.RegisterType<Application>().As<IApplication>();
-            builder.RegisterType<BusinessLogic>().As<IBusinessLogic>();
+            builder.RegisterType<BetterBusinessLogic>().As<IBusinessLogic>();
 
             //In the DemoLibrary namespace find the word Utilities (folder)
             //In the utilities folder give me all the classes, register them and then link them up to the matching interface.
