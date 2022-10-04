@@ -1,0 +1,85 @@
+1 - Create interfaces for classes that you're going to use in the depency injection.
+2 - Create a constructor (ctor)
+
+    ILogger _logger;
+    IDataAccess _dataAccess;
+    public BusinessLogic(ILogger logger, IDataAccess dataAccess)
+    {
+        _logger = logger;
+        _dataAccess = dataAccess;
+    }
+
+3 - Change the variables to the private field
+
+    public void ProcessData()
+    {
+        logger.Log("Starting the processing of data.");
+        Console.WriteLine("Processing the data");
+        dataAccess.LoadData();
+        dataAccess.SaveData("ProcessedInfo");
+        logger.Log("Finished processing of the data.");
+    }
+
+    \/
+
+    public void ProcessData()
+    {
+        _logger.Log("Starting the processing of data.");
+        Console.WriteLine("Processing the data");
+        _dataAccess.LoadData();
+        _dataAccess.SaveData("ProcessedInfo");
+        _logger.Log("Finished processing of the data.");
+    }
+
+4 - Install autofac where the container will be configured.
+5 - Create the container config class in the main project (make it static).
+6 - Register pieces in the container and return the builder.Build();
+
+public static IContainer Configure()
+{
+    var builder = new ContainerBuilder();
+
+    builder.RegisterType<BusinessLogic>().As<IBusinessLogic>();
+
+    //In the DemoLibrary namespace find the word Utilities (folder)
+    //In the utilities folder give me all the classes, register them and then link them up to the matching interface.
+    builder.RegisterAssemblyTypes(Assembly.Load(nameof(DemoLibrary)))
+        .Where(t => t.Namespace.Contains("Utilities"))
+        .As(t => t.GetInterfaces().FirstOrDefault(i => i.Name == "I" + t.Name));
+
+    return builder.Build();
+}
+
+7 - If the main is a static class, create a "Application" class in the main project (non-static)
+
+    IBusinessLogic _businessLogic;
+    public Application(IBusinessLogic businessLogic)
+    {
+        _businessLogic = businessLogic;
+    }
+
+    public void Run()
+    {
+        _businessLogic.ProcessData();
+    }
+
+8 - Extract a interface of the Application class.
+9 - Map the application in the container
+
+builder.RegisterType<Application>().As<IApplication>();
+
+
+10 - In the class Program.cs, instantiate the App interface using the .Resolve method and use the Run method.
+
+    static void Main(string[] args)
+    {
+        var container = ContainerConfig.Configure();
+
+        using (var scope  = container.BeginLifetimeScope())
+        {
+            var app = scope.Resolve<IApplication>();
+            app.Run();
+        }
+
+        Console.ReadLine();
+    }
